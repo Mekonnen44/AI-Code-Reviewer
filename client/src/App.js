@@ -1,15 +1,19 @@
 import React, { useState } from 'react';
 import Editor from '@monaco-editor/react';
 import axios from 'axios';
+import AISuggestions from './components/AISuggestions';
 
 function App() {
   const [code, setCode] = useState('// Write your code here');
   const [review, setReview] = useState('');
+  const [suggestions, setSuggestions] = useState([]);
 
   const handleReview = async () => {
     try {
       const response = await axios.post('http://localhost:3000/review-code', { code });
-      setReview(response.data.choices[0].text);
+      const aiResponse = response.data.choices[0].text;
+      setReview(aiResponse);
+      setSuggestions(aiResponse.split("\n")); // Basic parsing into suggestions
     } catch (error) {
       console.error('Error reviewing code:', error);
       setReview('Failed to review the code.');
@@ -31,6 +35,7 @@ function App() {
         <h2>Review:</h2>
         <pre>{review}</pre>
       </div>
+      <AISuggestions suggestions={suggestions} />
     </div>
   );
 }

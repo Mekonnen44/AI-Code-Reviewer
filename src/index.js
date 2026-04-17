@@ -3,6 +3,7 @@ const { Configuration, OpenAIApi } = require('openai');
 require('dotenv').config();
 require('./database'); // MongoDB connection
 const CodeReview = require('./models/CodeReview');
+const reviewRoutes = require('./routes/reviews');
 
 const app = express();
 const PORT = process.env.PORT || 3000;
@@ -26,7 +27,8 @@ app.post('/review-code', async (req, res) => {
     });
 
     // Save to database
-    const codeReview = new CodeReview({ code, response: response.data.choices[0].text });
+    const aiResponse = response.data.choices[0].text;
+    const codeReview = new CodeReview({ code, response: aiResponse });
     await codeReview.save();
 
     res.json(response.data);
@@ -34,6 +36,9 @@ app.post('/review-code', async (req, res) => {
     res.status(500).json({ error: 'Failed to review code', details: error.message });
   }
 });
+
+// Use reviews route
+app.use('/reviews', reviewRoutes);
 
 app.listen(PORT, () => {
   console.log(`Server running on port ${PORT}`);
