@@ -1,6 +1,8 @@
 const express = require('express');
 const { Configuration, OpenAIApi } = require('openai');
 require('dotenv').config();
+require('./database'); // MongoDB connection
+const CodeReview = require('./models/CodeReview');
 
 const app = express();
 const PORT = process.env.PORT || 3000;
@@ -19,13 +21,14 @@ app.post('/review-code', async (req, res) => {
   try {
     const response = await openai.createCompletion({
       model: 'text-davinci-003',
-      prompt: `Review this code:
-
-${code}
-
-Identify bugs, suggest improvements, and refactoring tips.`,
+      prompt: `Review this code:\n\n${code}\n\nIdentify bugs, suggest improvements, and refactoring tips.`,
       max_tokens: 150,
     });
+
+    // Save to database
+    const codeReview = new CodeReview({ code, response: response.data.choices[0].text });
+    await codeReview.save();
+
     res.json(response.data);
   } catch (error) {
     res.status(500).json({ error: 'Failed to review code', details: error.message });
